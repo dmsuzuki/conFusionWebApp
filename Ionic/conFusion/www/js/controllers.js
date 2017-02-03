@@ -151,7 +151,7 @@ angular.module('conFusion.controllers', [])
     };
   }])
 
-  .controller('DishDetailController', ['$scope', '$stateParams', 'menuFactory', 'baseURL', function ($scope, $stateParams, menuFactory, baseURL) {
+  .controller('DishDetailController', ['$scope', '$stateParams', 'menuFactory', 'favoriteFactory', 'baseURL', '$ionicPopover', '$ionicModal', function ($scope, $stateParams, menuFactory, favoriteFactory, baseURL, $ionicPopover, $ionicModal) {
 
     $scope.baseURL = baseURL;
     $scope.dish = {};
@@ -168,6 +168,64 @@ angular.module('conFusion.controllers', [])
           $scope.message = "Error: " + response.status + " " + response.statusText;
         }
       );
+
+    // POPOVER TO SELECT FAVORITE OR COMMENT
+    $scope.popover = $ionicPopover.fromTemplateUrl('templates/dish-detail-popover.html', {
+      scope: $scope
+    }).then(function (popover) {
+      $scope.popover = popover;
+    });
+
+    $scope.openPopover = function ($event) {
+      $scope.popover.show($event);
+    };
+    $scope.closePopover = function () {
+      $scope.popover.hide();
+    };
+
+    //Cleanup the popover when we're done with it!
+    $scope.$on('$destroy', function () {
+      $scope.popover.remove();
+    });
+
+    // ADD DISH TO FAVORITE
+    $scope.addFavorite = function () {
+      favoriteFactory.addToFavorites($scope.dish.id);
+      $scope.closePopover();
+    };
+
+    // COMMENT MODAL
+    $ionicModal.fromTemplateUrl('templates/dish-comment.html', {
+      scope: $scope
+    }).then(function (modal) {
+      $scope.commentform = modal;
+    });
+
+    // Triggered in the comment form modal to close it
+    $scope.closeCommentForm = function () {
+      $scope.commentform.hide();
+      $scope.closePopover();
+    };
+
+    // Open the comment form modal
+    $scope.openCommentForm = function () {
+      $scope.commentform.show();
+    };
+
+    // PERFORM SUBMIT COMMENT
+    $scope.mycomment = {rating: "", comment: "", author: "", date: ""};
+
+    $scope.submitComment = function () {
+      $scope.mycomment.date = new Date().toISOString();
+      console.log('Submitting comment', $scope.mycomment);
+
+      $scope.dish.comments.push($scope.mycomment);
+      menuFactory.getDishes().update({id: $scope.dish.id}, $scope.dish);
+      $scope.mycomment = {rating: "", comment: "", author: "", date: ""};
+
+      $scope.closeCommentForm();
+    };
+
   }])
 
   .controller('DishCommentController', ['$scope', 'menuFactory', function ($scope, menuFactory) {
