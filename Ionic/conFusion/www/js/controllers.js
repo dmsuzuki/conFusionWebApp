@@ -10,7 +10,7 @@ angular.module('conFusion.controllers', [])
     //});
 
     // Form data for the login modal
-    $scope.loginData = $localStorage.getObject('userinfo','{}');
+    $scope.loginData = $localStorage.getObject('userinfo', '{}');
     $scope.reservation = {};
 
     // Create the login modal that we will use later
@@ -33,7 +33,7 @@ angular.module('conFusion.controllers', [])
     // Perform the login action when the user submits the login form
     $scope.doLogin = function () {
       console.log('Doing login', $scope.loginData);
-      $localStorage.storeObject('userinfo',$scope.loginData);
+      $localStorage.storeObject('userinfo', $scope.loginData);
 
       // Simulate a login delay. Remove this and replace with your login
       // code if using a login system
@@ -74,12 +74,11 @@ angular.module('conFusion.controllers', [])
   })
 
   // TASK 2
-  .controller('MenuController', ['$scope', 'dishes', 'favoriteFactory', 'baseURL', '$ionicListDelegate', function ($scope, dishes, favoriteFactory, baseURL, $ionicListDelegate) {
+  .controller('MenuController', ['$scope', 'dishes', 'favoriteFactory', 'baseURL', '$ionicListDelegate', '$ionicPlatform', '$cordovaLocalNotification', '$cordovaToast', function ($scope, dishes, favoriteFactory, baseURL, $ionicListDelegate, $ionicPlatform, $cordovaLocalNotification, $cordovaToast) {
     $scope.baseURL = baseURL;
     $scope.tab = 1;
     $scope.filtText = '';
     $scope.showDetails = false;
-    $scope.showMenu = false;
 
     $scope.dishes = dishes;
     console.log($scope.dishes);
@@ -110,6 +109,27 @@ angular.module('conFusion.controllers', [])
       console.log("favorite index is " + index);
       favoriteFactory.addToFavorites(index);
       $ionicListDelegate.closeOptionButtons();
+
+      $ionicPlatform.ready(function () {
+        $cordovaLocalNotification.schedule({
+          id: 1,
+          title: "Added Favorite",
+          text: $scope.dishes[index].name
+        }).then(function () {
+          console.log('Added Favorite ' + $scope.dishes[index].name);
+        },
+        function () {
+          console.log('Failed to add Notification ');
+        });
+
+        $cordovaToast
+          .show('Added Favorite ' + $scope.dishes[index].name, 'long', 'center')
+          .then(function (success) {
+            // success
+          }, function (error) {
+            // error
+          });
+      });
     };
   }])
 
